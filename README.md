@@ -1,4 +1,4 @@
-# -AI-for-Financial-Market-Prediction
+# -AI-for-Financial-Market-Prediction(To be fully completed)
  This model predicts stock prices or detect trends in financial markets using historical data and news sentiment analysis.
 # Stock Price Prediction using Historical Data and News Sentiment Analysis
 
