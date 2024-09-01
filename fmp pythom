@@ -1,0 +1,127 @@
+import yfinance as yf
+import pandas as pd
+
+# Fetch historical stock data for a specific stock
+stock_data = yf.download('AAPL', start='2015-01-01', end='2023-01-01')
+
+# Preview the data
+print(stock_data.head())
+# Example of reading a CSV file with news data
+news_data = pd.read_csv('news_headlines.csv')
+
+# Preview the news data
+print(news_data.head())
+# Fill missing values
+stock_data.fillna(method='ffill', inplace=True)
+
+# Create features such as moving averages
+stock_data['MA20'] = stock_data['Close'].rolling(window=20).mean()
+stock_data['MA50'] = stock_data['Close'].rolling(window=50).mean()
+
+# Drop rows with NaN values
+stock_data.dropna(inplace=True)
+import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+nltk.download('vader_lexicon')
+
+# Initialize the sentiment analyzer
+sia = SentimentIntensityAnalyzer()
+
+# Apply sentiment analysis on headlines
+news_data['Sentiment'] = news_data['Headline'].apply(lambda x: sia.polarity_scores(x)['compound'])
+
+# Merge the news sentiment data with stock data on date
+combined_data = pd.merge(stock_data, news_data, how='left', left_index=True, right_on='Date')
+
+# Drop columns that won't be used
+combined_data.drop(['Date', 'Open', 'High', 'Low', 'Volume'], axis=1, inplace=True)
+
+# Fill any missing sentiment data
+combined_data['Sentiment'].fillna(0, inplace=True)
+
+print(combined_data.head())
+import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+nltk.download('vader_lexicon')
+
+# Initialize the sentiment analyzer
+sia = SentimentIntensityAnalyzer()
+
+# Apply sentiment analysis on headlines
+news_data['Sentiment'] = news_data['Headline'].apply(lambda x: sia.polarity_scores(x)['compound'])
+
+# Merge the news sentiment data with stock data on date
+combined_data = pd.merge(stock_data, news_data, how='left', left_index=True, right_on='Date')
+
+# Drop columns that won't be used
+combined_data.drop(['Date', 'Open', 'High', 'Low', 'Volume'], axis=1, inplace=True)
+
+# Fill any missing sentiment data
+combined_data['Sentiment'].fillna(0, inplace=True)
+
+print(combined_data.head())
+from sklearn.model_selection import train_test_split
+
+# Define features and target variable
+X = combined_data.drop(['Close'], axis=1)
+y = combined_data['Close']
+
+# Split the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+
+# Initialize the model
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Make predictions
+predictions = model.predict(X_test)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, predictions)
+print(f'Mean Squared Error: {mse}')
+import numpy as np
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout
+
+# Reshape data for LSTM [samples, time steps, features]
+X_train_lstm = np.reshape(X_train.values, (X_train.shape[0], 1, X_train.shape[1]))
+X_test_lstm = np.reshape(X_test.values, (X_test.shape[0], 1, X_test.shape[1]))
+
+# Build the LSTM model
+model = Sequential()
+model.add(LSTM(units=50, return_sequences=True, input_shape=(X_train_lstm.shape[1], X_train_lstm.shape[2])))
+model.add(Dropout(0.2))
+model.add(LSTM(units=50))
+model.add(Dropout(0.2))
+model.add(Dense(1))
+
+# Compile the model
+model.compile(optimizer='adam', loss='mean_squared_error')
+
+# Train the model
+model.fit(X_train_lstm, y_train, epochs=20, batch_size=32)
+
+# Make predictions
+predictions = model.predict(X_test_lstm)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, predictions)
+print(f'Mean Squared Error: {mse}')
+import matplotlib.pyplot as plt
+
+# Plot the predictions vs actual prices
+plt.figure(figsize=(10,6))
+plt.plot(y_test.values, color='blue', label='Actual Prices')
+plt.plot(predictions, color='red', label='Predicted Prices')
+plt.title('Stock Price Prediction')
+plt.xlabel('Time')
+plt.ylabel('Price')
+plt.legend()
+plt.show()
+
